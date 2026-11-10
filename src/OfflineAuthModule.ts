@@ -1,6 +1,6 @@
 import { NativeModule, requireNativeModule } from 'expo';
 
-declare class OfflineAuthModule extends NativeModule<{}> {
+declare class OfflineAuthModule extends NativeModule<Record<string, never>> {
   setValueAsync(value: string): Promise<void>;
 }
 
