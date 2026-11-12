@@ -1,3 +1,4 @@
+
 plugins {
   id 'com.android.library'
   id 'expo-module-gradle-plugin'
@@ -8,11 +9,17 @@ version = '0.1.0'
 
 android {
   namespace "expo.modules.offlineauth"
+
   defaultConfig {
     versionCode 1
     versionName "0.1.0"
   }
+
   lintOptions {
     abortOnError false
   }
+}
+
+dependencies {
+  implementation "io.github.john-dembaremba:offline-auth-android:0.1.0"
 }

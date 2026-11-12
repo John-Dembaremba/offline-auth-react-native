@@ -1,6 +1,9 @@
-import { registerWebModule, NativeModule } from 'expo';
+import { NativeModule } from 'expo';
 
-// OfflineAuthModule is not available on the web platform.
-class OfflineAuthModule extends NativeModule<Record<string, never>> {}
+class OfflineAuthWebModule extends NativeModule<Record<string, never>> {
+  async getPublicKey(): Promise<string> {
+    throw new Error('offline-auth-react-native is only supported on Android.');
+  }
+}
 
-export default registerWebModule(OfflineAuthModule, 'OfflineAuthModule');
+export default new OfflineAuthWebModule();
