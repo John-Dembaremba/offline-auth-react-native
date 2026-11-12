@@ -55,3 +55,13 @@ yarn-error.log
 
 # Expo
 .expo/*
+
+# Expo example application
+/example/.expo/
+/example/android/
+/example/ios/
+/example/node_modules/
+
+# Local test artifacts
+*.log
+*.backup
