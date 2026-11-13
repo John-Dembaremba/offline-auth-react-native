@@ -1,3 +1,4 @@
+
 {
   "expo": {
     "name": "Offline Auth Example",
@@ -17,6 +18,9 @@
     },
     "platforms": [
       "android"
+    ],
+    "plugins": [
+      "offline-auth-react-native"
     ],
     "experiments": {
       "autolinkingModuleResolution": true
