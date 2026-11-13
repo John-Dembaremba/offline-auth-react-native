@@ -1,19 +1,33 @@
+
 {
   "name": "offline-auth-react-native",
   "version": "0.1.0",
   "description": "React Native bridge for offline-auth-android",
   "main": "build/index.js",
   "types": "build/index.d.ts",
+  "files": [
+    "android/build.gradle",
+    "android/src/main",
+    "build",
+    "!build/__tests__",
+    "!build/**/*.test.js",
+    "!build/**/*.test.d.ts",
+    "plugin/withOfflineAuth.js",
+    "app.plugin.js",
+    "expo-module.config.json",
+    "README.md",
+    "LICENSE"
+  ],
   "scripts": {
     "build": "node internal/module_scripts/build.js",
     "clean": "node internal/module_scripts/clean.js",
-    "lint": "eslint src/ --max-warnings 0",
+    "lint": "eslint src/ plugin/ app.plugin.js --max-warnings 0",
     "test": "node internal/module_scripts/test.js",
     "prepare": "node internal/module_scripts/prepare.js",
     "open:ios": "node internal/module_scripts/open-ios.js",
     "open:android": "node internal/module_scripts/open-android.js",
-    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"example/**/*.{ts,tsx}\"",
-    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"example/**/*.{ts,tsx}\"",
+    "format": "prettier --write \"src/**/*.{ts,tsx}\" \"example/**/*.{ts,tsx}\" \"plugin/**/*.js\" \"app.plugin.js\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"example/**/*.{ts,tsx}\" \"plugin/**/*.js\" \"app.plugin.js\"",
     "typecheck": "tsc --noEmit",
     "test:ci": "jest --ci --runInBand"
   },
@@ -51,7 +65,8 @@
   "jest": {
     "preset": "jest-expo",
     "roots": [
-      "<rootDir>/src"
+      "<rootDir>/src",
+      "<rootDir>/plugin"
     ]
   },
   "peerDependencies": {
@@ -68,6 +83,7 @@
       "types": "./build/index.d.ts",
       "react-native": "./build/index.js",
       "default": "./build/index.js"
-    }
+    },
+    "./app.plugin.js": "./app.plugin.js"
   }
 }

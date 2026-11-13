@@ -12,7 +12,7 @@ function run(cmd, args = []) {
 
 // Clean and build main
 fs.rmSync(path.join(process.cwd(), 'build'), { recursive: true, force: true });
-run('tsc');
+run('tsc', ['--project', 'tsconfig.build.json']);
 
 // Clean and build any existing subtargets
 for (const target of SUBTARGETS) {
