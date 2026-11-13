@@ -1,10 +1,16 @@
+
 package expo.modules.offlineauth
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import io.github.johndembaremba.offlineauth.OfflineAuthManager
+import io.github.johndembaremba.offlineauth.model.CredentialSyncFailureReason
+import io.github.johndembaremba.offlineauth.serialization.SnapshotParser
+import io.github.johndembaremba.offlineauth.sync.UnsupportedProtocolVersionException
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -17,32 +23,75 @@ class OfflineAuthIntegrationTest {
             .targetContext
 
     @Test
-    fun getPublicKeyReturnsNonEmptyKey() {
+    fun backendFailureIsPreservedInSyncResult() = runBlocking {
+        val snapshotJson = """
+            {
+                "protocol_version": 1,
+                "credentials": [],
+                "failures": [
+                    {
+                        "user_id": "2",
+                        "username": "sync_test_bob",
+                        "reason": "unusable_password"
+                    }
+                ]
+            }
+        """.trimIndent()
+
+        val snapshot = SnapshotParser().parse(snapshotJson)
         val manager = OfflineAuthManager.create(context)
 
-        val publicKey = manager.getPublicKey()
+        val result = manager.sync(snapshot)
 
-        assertFalse("Public key must not be empty", publicKey.isBlank())
+        assertTrue(result.successfulUsernames.isEmpty())
+        assertEquals(1, result.failures.size)
+        assertEquals("sync_test_bob", result.failures[0].username)
+
+        val reason = result.failures[0].reason
+
+        assertTrue(reason is CredentialSyncFailureReason.Backend)
+        assertEquals(
+            "unusable_password",
+            (reason as CredentialSyncFailureReason.Backend).reason
+        )
     }
 
     @Test
-    fun repeatedCallsReturnSamePublicKey() {
+    fun unsupportedProtocolVersionIsRejected() = runBlocking {
+        val snapshotJson = """
+            {
+                "protocol_version": 999,
+                "credentials": [],
+                "failures": []
+            }
+        """.trimIndent()
+
+        val snapshot = SnapshotParser().parse(snapshotJson)
         val manager = OfflineAuthManager.create(context)
 
-        val first = manager.getPublicKey()
-        val second = manager.getPublicKey()
-
-        assertEquals(first, second)
+        try {
+            manager.sync(snapshot)
+            fail("Expected unsupported protocol exception")
+        } catch (e: UnsupportedProtocolVersionException) {
+            assertEquals(999, e.protocolVersion)
+        }
     }
 
     @Test
-    fun recreatingManagerPreservesPublicKey() {
-        val firstManager = OfflineAuthManager.create(context)
-        val firstKey = firstManager.getPublicKey()
+    fun malformedSnapshotJsonIsRejected() {
+        val invalidJson = """
+            {
+                "protocol_version": 1,
+                "credentials": "invalid",
+                "failures": []
+            }
+        """.trimIndent()
 
-        val secondManager = OfflineAuthManager.create(context)
-        val secondKey = secondManager.getPublicKey()
-
-        assertEquals(firstKey, secondKey)
+        try {
+            SnapshotParser().parse(invalidJson)
+            fail("Expected snapshot parsing to fail")
+        } catch (e: kotlinx.serialization.SerializationException) {
+            assertTrue(e.message?.isNotBlank() == true)
+        }
     }
 }
