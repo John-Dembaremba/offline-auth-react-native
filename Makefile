@@ -42,7 +42,7 @@ integration-test:
 		echo "Set up the Expo Android example before running integration tests."; \
 		exit 1; \
 	fi
-	cd example/android && bash ./gradlew connectedDebugAndroidTest
+	cd example/android && bash ./gradlew :offline-auth-react-native:connectedDebugAndroidTest --console=plain
 
 # Default test command
 test: unit-test
