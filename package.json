@@ -15,7 +15,7 @@
     "format": "prettier --write \"src/**/*.{ts,tsx}\" \"example/**/*.{ts,tsx}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx}\" \"example/**/*.{ts,tsx}\"",
     "typecheck": "tsc --noEmit",
-    "test:ci": "jest --ci --runInBand --passWithNoTests"
+    "test:ci": "jest --ci --runInBand"
   },
   "keywords": [
     "react-native",
@@ -33,6 +33,7 @@
   "dependencies": {},
   "devDependencies": {
     "@babel/core": "^7.26.0",
+    "@jest/globals": "^30",
     "@react-native/jest-preset": "0.88.1",
     "@types/jest": "^30.0.0",
     "@types/react": "~19.3.0",
