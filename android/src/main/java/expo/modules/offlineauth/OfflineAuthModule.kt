@@ -8,8 +8,6 @@ import expo.modules.kotlin.modules.ModuleDefinition
 import io.github.johndembaremba.offlineauth.OfflineAuthManager
 import io.github.johndembaremba.offlineauth.model.CredentialSyncFailureReason
 import io.github.johndembaremba.offlineauth.serialization.SnapshotParser
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.launch
 
 class OfflineAuthModule : Module() {
 
@@ -23,11 +21,11 @@ class OfflineAuthModule : Module() {
                 )
 
             val manager = OfflineAuthManager.create(context)
+
             manager.getPublicKey()
         }
 
         AsyncFunction("sync") { snapshotJson: String, promise: Promise ->
-            val scope = appContext.backgroundCoroutineScope
             val context = appContext.reactContext
 
             if (context == null) {
@@ -39,49 +37,48 @@ class OfflineAuthModule : Module() {
                 return@AsyncFunction
             }
 
-            scope.launch {
-                try {
-                    val snapshot = SnapshotParser().parse(snapshotJson)
-                    val manager = OfflineAuthManager.create(context)
+            NativePromiseRunner.launch(
+                scope = appContext.backgroundCoroutineScope,
+                promise = promise
+            ) {
+                val snapshot = SnapshotParser().parse(snapshotJson)
 
-                    val result = manager.sync(snapshot)
+                val manager = OfflineAuthManager.create(context)
 
-                    val response = mapOf(
-                        "successfulUsernames" to result.successfulUsernames,
-                        "failures" to result.failures.map { failure ->
-                            val (source, reason) = when (
-                                val failureReason = failure.reason
-                            ) {
-                                is CredentialSyncFailureReason.Local ->
-                                    "local" to failureReason.reason.code
+                val result = manager.sync(snapshot)
 
-                                is CredentialSyncFailureReason.Backend ->
-                                    "backend" to failureReason.reason
-                            }
+                mapOf(
+                    "successfulUsernames" to result.successfulUsernames,
+                    "failures" to result.failures.map { failure ->
+                        val (source, reason) = when (
+                            val failureReason = failure.reason
+                        ) {
+                            is CredentialSyncFailureReason.Local ->
+                                "local" to failureReason.reason.code
 
-                            mapOf(
-                                "username" to failure.username,
-                                "source" to source,
-                                "reason" to reason,
-                                "storedCredentialVersion" to
-                                    failure.storedCredentialVersion,
-                                "incomingCredentialVersion" to
-                                    failure.incomingCredentialVersion
-                            )
+                            is CredentialSyncFailureReason.Backend ->
+                                "backend" to failureReason.reason
                         }
-                    )
 
-                    promise.resolve(response)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    promise.reject(e.toCodedException())
-                }
+                        mapOf(
+                            "username" to failure.username,
+                            "source" to source,
+                            "reason" to reason,
+                            "storedCredentialVersion" to
+                                failure.storedCredentialVersion,
+                            "incomingCredentialVersion" to
+                                failure.incomingCredentialVersion
+                        )
+                    }
+                )
             }
         }
 
+        AsyncFunction("authenticate") {
+                username: String,
+                password: String,
+                promise: Promise ->
 
-        AsyncFunction("authenticate") { username: String, password: String, promise: Promise ->
             val context = appContext.reactContext
 
             if (context == null) {
@@ -93,27 +90,23 @@ class OfflineAuthModule : Module() {
                 return@AsyncFunction
             }
 
-            appContext.backgroundCoroutineScope.launch {
+            NativePromiseRunner.launch(
+                scope = appContext.backgroundCoroutineScope,
+                promise = promise
+            ) {
                 val passwordChars = password.toCharArray()
 
                 try {
                     val manager = OfflineAuthManager.create(context)
 
-                    val authenticated = manager.authenticate(
+                    manager.authenticate(
                         username = username,
                         password = passwordChars
                     )
-
-                    promise.resolve(authenticated)
-                } catch (e: CancellationException) {
-                    throw e
-                } catch (e: Exception) {
-                    promise.reject(e.toCodedException())
                 } finally {
                     passwordChars.fill('\u0000')
                 }
             }
         }
-
     }
 }
