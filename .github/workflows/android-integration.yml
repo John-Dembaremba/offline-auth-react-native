@@ -56,6 +56,7 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+
       - name: Run Android instrumentation tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -66,8 +67,7 @@ jobs:
           emulator-boot-timeout: 600
           disable-animations: true
           script: |
-            cd example/android
-            ./gradlew :offline-auth-react-native:connectedDebugAndroidTest --console=plain
+            cd example/android && ./gradlew :offline-auth-react-native:connectedDebugAndroidTest --console=plain
 
       - name: Upload Android test reports
         if: always()
