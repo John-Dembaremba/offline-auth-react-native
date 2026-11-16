@@ -1,0 +1,76 @@
+
+name: npm Staged Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Stage npm Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+          package-manager-cache: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.4.4"
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Prepare npm CLI
+        run: npm install --global npm@latest
+
+      - name: Verify npm CLI version
+        run: npm --version
+
+      - name: Verify tag matches package version
+        run: |
+          node - <<'NODE'
+          const pkg = require('./package.json');
+          const tag = process.env.GITHUB_REF_NAME;
+          const expected = `v${pkg.version}`;
+
+          if (tag !== expected) {
+            throw new Error(
+              `Release tag ${tag} does not match ${expected}`
+            );
+          }
+
+          console.log(`Validated ${pkg.name}@${pkg.version}`);
+          NODE
+
+      - name: Run static checks
+        run: make check
+
+      - name: Run Jest tests
+        run: make unit-test
+
+      - name: Build package
+        run: bun run prepare
+
+      - name: Verify package contents
+        run: npm pack --dry-run
+
+      - name: Stage npm release using OIDC
+        run: npm stage publish --access public
