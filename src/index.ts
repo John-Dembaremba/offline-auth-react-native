@@ -18,3 +18,7 @@ export async function getPublicKey(): Promise<string> {
 export async function sync(snapshot: OfflineCredentialSnapshot): Promise<CredentialSyncResult> {
   return OfflineAuthModule.sync(JSON.stringify(snapshot));
 }
+
+export async function authenticate(username: string, password: string): Promise<boolean> {
+  return OfflineAuthModule.authenticate(username, password);
+}
