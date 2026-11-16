@@ -79,5 +79,41 @@ class OfflineAuthModule : Module() {
                 }
             }
         }
+
+
+        AsyncFunction("authenticate") { username: String, password: String, promise: Promise ->
+            val context = appContext.reactContext
+
+            if (context == null) {
+                promise.reject(
+                    IllegalStateException(
+                        "React context is unavailable"
+                    ).toCodedException()
+                )
+                return@AsyncFunction
+            }
+
+            appContext.backgroundCoroutineScope.launch {
+                val passwordChars = password.toCharArray()
+
+                try {
+                    val manager = OfflineAuthManager.create(context)
+
+                    val authenticated = manager.authenticate(
+                        username = username,
+                        password = passwordChars
+                    )
+
+                    promise.resolve(authenticated)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    promise.reject(e.toCodedException())
+                } finally {
+                    passwordChars.fill('\u0000')
+                }
+            }
+        }
+
     }
 }

@@ -1,7 +1,12 @@
 import { useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { requireNativeModule } from 'expo';
-import { getPublicKey, sync, type OfflineCredentialSnapshot } from 'offline-auth-react-native';
+import {
+  authenticate,
+  getPublicKey,
+  sync,
+  type OfflineCredentialSnapshot,
+} from 'offline-auth-react-native';
 
 export default function App() {
   const [publicKey, setPublicKey] = useState<string | null>(null);
@@ -98,6 +103,25 @@ export default function App() {
     }
   };
 
+  const handleUnknownUserAuth = async (): Promise<void> => {
+    setLoading(true);
+    setError(null);
+    setSyncResult(null);
+
+    try {
+      const authenticated = await authenticate('nonexistent_bridge_test_user', 'test-password');
+
+      console.log('Unknown user authentication:', authenticated);
+
+      setSyncResult(`Unknown user authenticated: ${authenticated}`);
+    } catch (err: unknown) {
+      console.error('Authentication error:', err);
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>Offline Auth</Text>
@@ -114,6 +138,10 @@ export default function App() {
 
       <Pressable style={styles.button} onPress={handleValidSync} disabled={loading}>
         <Text style={styles.buttonText}>Test Valid Sync</Text>
+      </Pressable>
+
+      <Pressable style={styles.button} onPress={handleUnknownUserAuth} disabled={loading}>
+        <Text style={styles.buttonText}>Test Unknown User Authentication</Text>
       </Pressable>
 
       {loading && <ActivityIndicator size="large" />}
