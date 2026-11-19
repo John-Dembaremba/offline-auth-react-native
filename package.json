@@ -1,7 +1,6 @@
-
 {
   "name": "offline-auth-react-native",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React Native bridge for offline-auth-android",
   "main": "build/index.js",
   "types": "build/index.d.ts",
