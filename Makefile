@@ -1,7 +1,7 @@
 
 .DEFAULT_GOAL := all
 
-.PHONY: all check format format-check lint typecheck \
+.PHONY: build all check format format-check lint typecheck \
         test unit-test integration-test full-test clean
 
 # Default: run fast checks
@@ -46,6 +46,9 @@ integration-test:
 
 # Default test command
 test: unit-test
+
+build:
+	bun run build
 
 # Run all checks and all test suites
 full-test: check unit-test integration-test
