@@ -5,6 +5,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -22,12 +23,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
-          registry-url: "https://registry.npmjs.org"
           package-manager-cache: false
 
       - name: Setup Bun
@@ -44,21 +46,32 @@ jobs:
       - name: Verify npm CLI version
         run: npm --version
 
-      - name: Verify tag matches package version
+      - name: Verify release version
         run: |
           node - <<'NODE'
           const pkg = require('./package.json');
-          const tag = process.env.GITHUB_REF_NAME;
-          const expected = `v${pkg.version}`;
+          const tag = `v${pkg.version}`;
 
-          if (tag !== expected) {
+          if (
+            process.env.GITHUB_EVENT_NAME === 'push' &&
+            process.env.GITHUB_REF_NAME !== tag
+          ) {
             throw new Error(
-              `Release tag ${tag} does not match ${expected}`
+              `Release tag ${process.env.GITHUB_REF_NAME} does not match ${tag}`
             );
           }
 
           console.log(`Validated ${pkg.name}@${pkg.version}`);
           NODE
+
+          VERSION=$(node -p "require('./package.json').version")
+
+          git rev-parse --verify "refs/tags/v${VERSION}"
+
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            git merge-base --is-ancestor \
+              "v${VERSION}^{commit}" HEAD
+          fi
 
       - name: Run static checks
         run: make check
